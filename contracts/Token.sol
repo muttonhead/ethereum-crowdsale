@@ -1,6 +1,8 @@
 pragma solidity ^0.4.15;
 
-contract Token {
+import {Owned} from './Owned.sol';
+
+contract Token is Owned {
 	// Configuration
 	string public name;
 	string public symbol;
@@ -19,16 +21,19 @@ contract Token {
 		decimals = _decimals;
 	}
 
-	// Transfer coins to another address
-	function transfer(address _to, uint256 _value) {
-		// Check that the sender has enough tokens and for overflows
-		require(balanceOf[msg.sender] >= _value && balanceOf[_to] + _value >= balanceOf[_to]);
-
-		// Send the tokens
+	function _transfer(address _from, address _to, uint _value) internal {
+		require(_to != 0x0);
+		require(balanceOf[_from] > _value);
+		require(balanceOf[_to] + _value > balanceOf[_to]);
+		//require(!frozenAccount(_from));
+		//require(!frozenAccount(_to));
 		balanceOf[msg.sender] -= _value;
 		balanceOf[_to] += _value;
+		Transfer(_from, _to, _value);
+	}
 
-		// Notify listeners
-		Transfer(msg.sender, _to, _value);
+	// Transfer coins to another address
+	function transfer(address _to, uint256 _value) public {
+		_transfer(msg.sender, _to, _value);
 	}
 }
