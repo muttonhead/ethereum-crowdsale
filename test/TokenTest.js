@@ -28,6 +28,9 @@ contract('Token', (accounts) => {
 			return tokenInstance.balanceOf(owner);
 		}).then((balance) => {
 			assert.equal(balance.toNumber(), INITIAL_SUPPLY);
+			return tokenInstance.totalSupply.call();
+		}).then((totalSupply) => {
+			assert.equal(totalSupply.toNumber(), INITIAL_SUPPLY);
 			done();
 		});
 	});
@@ -56,6 +59,33 @@ contract('Token', (accounts) => {
 			return tokenInstance.balanceOf(accounts[1]);
 		}).then((balance) => {
 			assert.equal(balance.toNumber(), amount);
+			done();
+		});
+	});
+
+	it('should be able to mint new tokens', (done) => {
+		const amount = 100;
+		let initialBalance = 0;
+		tokenInstance.balanceOf(accounts[1]).then((balance) => {
+			initialBalance = parseInt(balance);
+			return tokenInstance.mintToken(accounts[1], amount);
+		}).then((receipt) => {
+			assert.equal(receipt.logs.length, 2);
+			let log = receipt.logs[0];
+			assert.equal(log.event, "Transfer");
+			assert.equal(log.args.from, '0x0000000000000000000000000000000000000000');
+			assert.equal(log.args.to, owner);
+			assert.equal(log.args.value, amount);
+
+			log = receipt.logs[1];
+			assert.equal(log.event, "Transfer");
+			assert.equal(log.args.from, owner);
+			assert.equal(log.args.to, accounts[1]);
+			assert.equal(log.args.value, amount);
+
+			return tokenInstance.balanceOf(accounts[1]);
+		}).then((balance) => {
+			assert.equal(balance.toNumber(), initialBalance + amount);
 			done();
 		});
 	});
